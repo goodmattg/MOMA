@@ -1,0 +1,8 @@
+# ignore image files
+imageCache/*
+
+# ignore caption files
+captionsCache/*
+
+# ignore node_modules
+node_modules/*
