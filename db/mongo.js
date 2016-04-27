@@ -23,7 +23,8 @@ var pieceSchema = new mongoose.Schema({
     year: String
   },
   filename: String,
-  image: Buffer
+  image: String,
+  id: Number
 });
 
 var Piece = mongoose.model('Pieces', pieceSchema);

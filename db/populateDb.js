@@ -1,10 +1,13 @@
 var mongo = require('./mongo.js');
 var fs = require('fs');
+var btoa = require('btoa')
 
 // Individual image promise. Givem caption and folder location of
-var imageReadPromise = function (pagename, cap) {
+var imageReadPromise = function (page, cap) {
+  var pageFolder = 'page' + page; // page folder i.e. dir 'page1'
+
   return new Promise(function (resolve, reject) {
-    fs.readFile('../imageCache/' + pagename + '/' + cap.filename, (err, data) => {
+    fs.readFile('../imageCache/' + pageFolder + '/' + cap.filename, (err, data) => {
       if (err) reject(err);
       // Create the mongo document for the image
       var piece = new mongo.Piece({ caption: {
@@ -13,7 +16,8 @@ var imageReadPromise = function (pagename, cap) {
           year: cap.caption.year
         },
         filename: cap.filename,
-        image: data
+        image: btoa(data),
+        id: (((page - 1) * 48) + Number(cap.filename.split('.')[0]))
       });
 
       piece.save(function (err) {
@@ -37,7 +41,7 @@ var pagePromise = function (page) {
       debugger;
       // Establish promises for each individual image
       var captionPromises = captions.map(function (caption) {
-        return imageReadPromise(pageFolder, caption);
+        return imageReadPromise(page, caption);
       });
 
       Promise.all(captionPromises).then(function (results) {
@@ -50,7 +54,7 @@ var pagePromise = function (page) {
 };
 
 // Loop through all page files to store into database
-var storePages = function (page) {
+var storePages = function (page, end) {
   console.log('Starting page ' + page);
   var singlePage = pagePromise(page); // Promise on single page
   singlePage.then(function (result) {
@@ -58,9 +62,12 @@ var storePages = function (page) {
     if (result < 38) {
       storePages(++result);
     }
+    end();
   });
 };
 
 // EXECUTE HERE
-storePages(1);
-console.log('DONE POPULATING');
+storePages(1, function () {
+  console.log('DONE POPULATING');
+});
+
